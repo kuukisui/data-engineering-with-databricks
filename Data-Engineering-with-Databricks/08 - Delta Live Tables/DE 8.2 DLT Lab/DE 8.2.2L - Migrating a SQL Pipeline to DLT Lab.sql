@@ -95,12 +95,12 @@ CREATE OR REFRESH STREAMING LIVE TABLE recordings_enriched
 COMMENT "SILVER: The cleaned recordings, where records with heartrate <=0 is dropped"
 AS SELECT 
   CAST(device_id as INT) device_id, 
-  mrn, 
+  a.mrn, 
   heartrate, 
   CAST(FROM_UNIXTIME(DOUBLE(time), 'yyyy-MM-dd HH:mm:ss') AS TIMESTAMP) time,
   name
   FROM STREAM(live.recordings_bronze) a
-  INNER JOIN LIVE.pii b
+  INNER JOIN STREAM(LIVE.pii) b
     ON a.mrn = b.mrn
 
 -- COMMAND ----------
@@ -129,7 +129,10 @@ SELECT mrn
     ,name
     ,AVG(heartrate) as avg_heartrate
     ,cast(time as date) as date
-FROM LIVE.recordings_enriched
+FROM STREAM(LIVE.recordings_enriched)
+GROUP BY mrn
+    ,name
+    ,cast(time as date) 
 
 -- COMMAND ----------
 
